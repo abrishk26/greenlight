@@ -91,26 +91,48 @@ func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var input struct {
-		Title   string   `json:"title"`
-		Year    int32    `json:"year"`
-		Runtime int32    `json:"runtime"`
-		Genres  []string `json:"genres"`
+	
+	
+	movie, err := a.models.Movies.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			a.notFoundResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+		return
 	}
 
+	var input struct {
+		Title   *string   `json:"title"`
+		Year    *int32    `json:"year"`
+		Runtime *int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+	}
+	
 	err = a.readJSON(w, r, &input)
 	if err != nil {
 		a.badRequestResponse(w, r, err)
 		return
 	}
-
+	
 	v := validator.New()
 
-	movie := &data.Movie{
-		Title: input.Title,
-		Year: input.Year,
-		Runtime: input.Runtime,
-		Genres: input.Genres,
+	if input.Title != nil {
+		movie.Title = *input.Title
+	}
+
+	if input.Genres != nil {
+		movie.Genres = input.Genres
+	}
+
+	if input.Year != nil {
+		movie.Year = *input.Year
+	}
+
+	if input.Runtime != nil {
+		movie.Runtime = *input.Runtime
 	}
 
 	data.ValidateMovie(v, movie)
@@ -120,17 +142,13 @@ func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	movie.ID = id
 	err = a.models.Movies.Update(movie)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 		return
 	}
 
-	headers := make(http.Header)
-	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
-
-	err = a.writeJSON(w, movie, headers, http.StatusAccepted)
+	err = a.writeJSON(w, movie, nil, http.StatusOK)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 	}
