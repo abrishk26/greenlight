@@ -83,3 +83,55 @@ func (a *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := a.readIDParam(r)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+
+	var input struct {
+		Title   string   `json:"title"`
+		Year    int32    `json:"year"`
+		Runtime int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+	}
+
+	err = a.readJSON(w, r, &input)
+	if err != nil {
+		a.badRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+
+	movie := &data.Movie{
+		Title: input.Title,
+		Year: input.Year,
+		Runtime: input.Runtime,
+		Genres: input.Genres,
+	}
+
+	data.ValidateMovie(v, movie)
+
+	if !v.Valid() {
+		a.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	movie.ID = id
+	err = a.models.Movies.Update(movie)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+		return
+	}
+
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	err = a.writeJSON(w, movie, headers, http.StatusAccepted)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+	}
+}
