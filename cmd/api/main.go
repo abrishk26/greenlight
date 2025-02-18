@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/abrishk26/greenlight/internal/data"
 	_ "github.com/lib/pq"
 )
 
@@ -29,6 +30,7 @@ type config struct {
 type application struct {
 	conf config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -61,6 +63,7 @@ func main() {
 	app := &application{
 		conf: cfg,
 		logger: logger,
+		models: data.New(db),
 	}
 		
 	srv := &http.Server{
