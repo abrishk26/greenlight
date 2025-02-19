@@ -23,7 +23,15 @@ func (a *application) readString(qs url.Values, key string, defaultValue string)
 	return s
 }
 
+func (a *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
 
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+}
 
 func (a *application) readIDParam(r *http.Request) (int64, error) {
 	params := httprouter.ParamsFromContext(r.Context())
