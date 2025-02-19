@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abrishk26/greenlight/internal/validator"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -31,6 +32,21 @@ func (a *application) readCSV(qs url.Values, key string, defaultValue []string) 
 	}
 
 	return strings.Split(csv, ",")
+}
+
+func (a *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddErr(key, "must be an integer value")
+		return defaultValue
+	}
+	return i
 }
 
 func (a *application) readIDParam(r *http.Request) (int64, error) {
