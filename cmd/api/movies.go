@@ -91,8 +91,6 @@ func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	
-	
 	movie, err := a.models.Movies.Get(id)
 	if err != nil {
 		switch {
@@ -105,18 +103,18 @@ func (a *application) updateMovieHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	var input struct {
-		Title   *string   `json:"title"`
-		Year    *int32    `json:"year"`
-		Runtime *int32    `json:"runtime"`
+		Title   *string  `json:"title"`
+		Year    *int32   `json:"year"`
+		Runtime *int32   `json:"runtime"`
 		Genres  []string `json:"genres"`
 	}
-	
+
 	err = a.readJSON(w, r, &input)
 	if err != nil {
 		a.badRequestResponse(w, r, err)
 		return
 	}
-	
+
 	v := validator.New()
 
 	if input.Title != nil {
@@ -179,7 +177,7 @@ func (a *application) deleteMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = a.writeJSON(w, map[string]string{"message": "movie successfully deleted"}, nil , http.StatusOK)
+	err = a.writeJSON(w, map[string]string{"message": "movie successfully deleted"}, nil, http.StatusOK)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 	}
