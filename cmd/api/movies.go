@@ -207,13 +207,13 @@ func (a *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	movies, err := a.models.Movies.GetAll(input.Title, input.Genres, input.Filter)
+	movies, metadata, err := a.models.Movies.GetAll(input.Title, input.Genres, input.Filter)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 		return
 	}
 
-	err = a.writeJSON(w, movies, nil, http.StatusOK)
+	err = a.writeJSON(w, map[string]interface{}{ "movies": movies, "metadata": metadata }, nil, http.StatusOK)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 	}
