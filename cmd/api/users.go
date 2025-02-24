@@ -52,13 +52,17 @@ func (a *application) registerUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = a.mailer.Send(user.Email, "user_welcome.tmpl", user)
-	if err != nil {
-		a.serverErrorResponse(w, r, err)
-		return
+	fn := func() {
+		err = a.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		if err != nil {
+			a.logger.PrintError(err, nil)
+			return
+		}
 	}
 
-	err = a.writeJSON(w, map[string]any{ "user": user }, nil, http.StatusCreated)
+	a.background(fn)
+
+	err = a.writeJSON(w, map[string]any{ "user": user }, nil, http.StatusAccepted)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 	}
