@@ -80,3 +80,57 @@ func (a *application) registerUserHandler(w http.ResponseWriter, r *http.Request
 		a.serverErrorResponse(w, r, err)
 	}
 }
+
+func (a *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		TokenplainText string `json:"token"`
+	}
+
+	err := a.readJSON(w, r, &input)
+	if err != nil {
+		a.badRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+
+	if data.ValidatePlainToken(v, input.TokenplainText); !v.Valid() {
+		a.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	user, err := a.models.Users.GetForToken(data.ScopeActivation, input.TokenplainText)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			a.notFoundResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	user.Activated = true
+
+	err = a.models.Users.Update(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			a.editConflictResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = a.models.Tokens.DeleteForAllUser(data.ScopeActivation, user.ID)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = a.writeJSON(w, map[string]any{ "user": user }, nil, http.StatusOK)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+	}
+}

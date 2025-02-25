@@ -46,7 +46,7 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 	return token, nil
 }
 
-func validatePlainToken(v *validator.Validator, plainTokenString string) {
+func ValidatePlainToken(v *validator.Validator, plainTokenString string) {
 	v.Check(plainTokenString != "", "token", "must be provided")
 	v.Check(len(plainTokenString) == 26, "token", "must be 26 bytes long")
 }
@@ -82,7 +82,7 @@ func (t TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, 
 
 func (t TokenModel) DeleteForAllUser(scope string, userID int64) error {
 	query := `
-		DELETE tokens
+		DELETE FROM tokens
 		WHERE user_id = $1 AND scope = $2
 	`
 
