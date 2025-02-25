@@ -127,8 +127,12 @@ func (a *application) readJSON(w http.ResponseWriter, r *http.Request, dst inter
 }
 
 func (a *application) background(fn func()) {
+	a.wg.Add(1)
+
 	// Launch a background goroutine.
 	go func() {
+		defer a.wg.Done()
+
 		// Recover any panic.
 		defer func() {
 			if err := recover(); err != nil {
